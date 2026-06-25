@@ -41,3 +41,4 @@ plt.tight_layout()
 plt.savefig("Results/noise_progression.png", dpi=200, bbox_inches='tight')
 plt.show()
 print("Saved to Results/noise_progression.png")
+

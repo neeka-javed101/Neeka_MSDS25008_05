@@ -16,41 +16,31 @@ model = DiffusionUNet().to(device)
 model.load_state_dict(torch.load("Models/best_model.pth", map_location=device))
 model.eval()
 
-dataset = AnimalDataset("animal_data", max_images_per_class=4, num_classes=5)
-dataloader = DataLoader(dataset, batch_size=1)
-real_image = next(iter(dataloader)).to(device)
-
 diffusion = Diffusion(device=device)
 
 print("Reconstructing image from noise...\n")
 
 # Add high noise to real image
 t_noisy = 500  
-t_tensor = torch.full((1,), t_noisy, dtype=torch.long, device=device)
 
-noisy_image, _ = diffusion.add_noise(real_image, t_tensor)
 
-print(f"Real image range: [{real_image.min():.3f}, {real_image.max():.3f}]")
-print(f"Noisy image at t={t_noisy} range: [{noisy_image.min():.3f}, {noisy_image.max():.3f}]")
-# Save original and noisy images
-real_denorm = (real_image.clamp(-1, 1) + 1) / 2
-noisy_denorm = (noisy_image.clamp(-1, 1) + 1) / 2
-save_image(real_denorm, "Results/original.png")
-save_image(noisy_denorm, "Results/noisy_t500.png")
+
 
 # Try to reconstruct from t=500 to t=0
 print(f"\nReconstructing from t={t_noisy} to t=0...")
+x= torch.randn(1, 3, 32, 32, device=device)  # Match your model's input shape
 
-x = noisy_image.clone()
+print(f"Starting from random noise with range: [{x.min():.3f}, {x.max():.3f}]\n")
 
 for t in reversed(range(1, t_noisy + 1)):
     if t % 100 == 0:
         print(f"  Step {t}: x range [{x.min():.3f}, {x.max():.3f}]")
     
-    t_tensor = torch.full((1,), t, dtype=torch.long, device=device)
+    t_tensor = torch.full((1,), t, dtype=torch.long, device=device)  # ✅ ADD THIS LINE
     
     with torch.no_grad():
         predicted_noise = model(x, t_tensor)
+    # ... rest stays the same ...
     # Compute mean and variance for reverse process
     sqrt_alpha_t = torch.sqrt(diffusion.alpha[t])
     sqrt_alpha_hat_t = diffusion.sqrt_alpha_hat[t]
@@ -77,7 +67,6 @@ reconstructed = (x.clamp(-1, 1) + 1) / 2
 save_image(reconstructed, "Results/reconstructed.png")
 
 print("\nSaved:")
-print("  - Results/original.png")
-print("  - Results/noisy_t500.png")
+
 print("  - Results/reconstructed.png")
 print("\nIf reconstruction ≈ original, the reverse process works!")
