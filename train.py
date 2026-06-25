@@ -7,13 +7,14 @@ import matplotlib.pyplot as plt
 from dataset import AnimalDataset
 from Diffusion import Diffusion
 from U_NET import DiffusionUNet
+# Custom MSE loss function for training
 class customMSELoss(nn.Module):
     def __init__(self):
         super().__init__()
     def forward(self, pred, target):
         return torch.mean((pred - target) ** 2)
 DATASET_PATH = "animal_data"
-
+# Training parameters
 BATCH_SIZE = 16
 epochs = 200
 LEARNING_RATE = 1e-4
@@ -31,6 +32,7 @@ loss_history = []
 best_epoch = 1
 patience = 20
 counter = 0
+# Training loop
 for epoch in range(epochs):
         total_loss = 0
         for images in dataloader:
@@ -46,12 +48,14 @@ for epoch in range(epochs):
         avg_loss = total_loss / len(dataloader)
         loss_history.append(avg_loss)
         print(f"Epoch [{epoch+1}/{epochs}], Loss: {avg_loss:.4f}")
+        # Save best model based on loss
         if avg_loss < best_loss:
             best_loss = avg_loss
             best_epoch = epoch + 1
             counter = 0
             torch.save(model.state_dict(), "Models/best_model.pth") 
             print("  → New best model saved!")
+            # Early stopping logic
         else:
             counter += 1
             if counter >= patience:
